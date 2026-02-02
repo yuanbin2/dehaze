@@ -1,5 +1,3 @@
-
-
 <script setup>
 
 import MenuIcon from "@/components/icons/MenuIcon.vue";
@@ -30,10 +28,11 @@ import HomepageIcon from "@/components/icons/HomepageIcon.vue";
           </div>
         </div>
         <div class="navbar-end">
-          <button class="btn btn-ghost text-lg">登录</button>
+          <RouterLink :to="{name: 'user-account-login-index'}" class="btn btn-ghost text-lg">登录</RouterLink>
         </div>
       </nav>
-      <slot></slot>
+      <slot>
+      </slot>
     </div>
 
     <div class="drawer-side is-drawer-close:overflow-visible">
@@ -41,22 +40,22 @@ import HomepageIcon from "@/components/icons/HomepageIcon.vue";
       <div class="flex min-h-full flex-col items-start bg-base-200 is-drawer-close:w-16 is-drawer-open:w-54">
         <ul class="menu w-full grow">
           <li>
-            <button class="is-drawer-close:tooltip is-drawer-close:tooltip-right py-3" data-tip="首页">
+            <RouterLink :to="{name: 'homepage-index'}" class="is-drawer-close:tooltip is-drawer-close:tooltip-right py-3" data-tip="首页">
               <HomepageIcon />
               <span class="is-drawer-close:hidden text-base ml-2 whitespace-nowrap">首页</span>
-            </button>
+            </RouterLink>
           </li>
           <li>
-            <button class="is-drawer-close:tooltip is-drawer-close:tooltip-right py-3" data-tip="好友">
+            <RouterLink :to="{name: 'friend-index'}" class="is-drawer-close:tooltip is-drawer-close:tooltip-right py-3" data-tip="好友">
               <FriendIcon />
               <span class="is-drawer-close:hidden text-base ml-2 whitespace-nowrap">好友</span>
-            </button>
+            </RouterLink>
           </li>
           <li>
-            <button class="is-drawer-close:tooltip is-drawer-close:tooltip-right py-3" data-tip="创作">
+            <RouterLink :to="{name: 'create-index'}" class="is-drawer-close:tooltip is-drawer-close:tooltip-right py-3" data-tip="创作">
               <CreateIcon />
               <span class="is-drawer-close:hidden text-base ml-2 whitespace-nowrap">创作</span>
-            </button>
+            </RouterLink>
           </li>
         </ul>
       </div>
