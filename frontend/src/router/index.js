@@ -52,6 +52,11 @@ const router = createRouter({
       name: 'user-space-index',
     },
     {
+      path: '/user/profile/',
+      component: ProfileIndex,
+      name: 'user-profile-index'
+    },
+    {
       path: '/:pathMatch(.*)*',
       component: NotFoundIndex,
       name: 'not-found',

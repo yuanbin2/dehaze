@@ -41,7 +41,7 @@ const user = useUserStore()
           <RouterLink v-if="!user.isLogin()" :to="{name: 'user-account-login-index'}" class="btn btn-ghost text-lg">
             登录
           </RouterLink>
-          <UserMenu v-else />
+          <UserMenu v-else/>
         </div>
       </nav>
       <slot>

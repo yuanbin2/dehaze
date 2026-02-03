@@ -5,20 +5,39 @@ import {useUserStore} from "@/stores/user.js";
 import UserLogoutIcon from "@/components/icons/UserLogoutIcon.vue";
 import UserSpaceIcon from "@/components/icons/UserSpaceIcon.vue";
 import UserProfileIcon from "@/components/icons/UserProfileIcon.vue";
+import api from "@/js/http/api.js";
+import {useRouter} from "vue-router";
 const user = useUserStore()
+const router = useRouter()
 
 function closeMenu(){
   const element = document.activeElement
   if(element && element instanceof HTMLElement) element.blur()
 }
+
+async function handleLogout(){
+  try{
+    const res = await api.post('/api/user/account/logout/')
+    const data = res.data
+    if(data.result === 'success'){
+      user.logout()
+      await router.push({
+        name: 'homepage-index'
+      })
+    }
+  }catch (err){
+    console.log(err)
+  }
+}
+
 </script>
 
 <template>
 <div class="dropdown dropdown-end">
-  <div tabindex="0" role="button" class="btn m-1">
-    <div>
-      <img :src="user.photo" alt="">
-    </div>
+  <div tabindex="0" role="button" class="avatar btn btn-circle w-8 h-8 mr-6">
+      <div class="w-8 rounded-full">
+        <img :src="user.photo" alt="">
+      </div>
   </div>
   <ul tabindex="-1" class="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
     <li>
@@ -38,13 +57,13 @@ function closeMenu(){
       </RouterLink>
     </li>
     <li>
-      <RouterLink @click="closeMenu" :to="{name:'user-space-index', params:{user_id:user.id}}" class="text-sm font-bold py-3">
+      <RouterLink @click="closeMenu" :to="{name:'user-profile-index'}" class="text-sm font-bold py-3">
         <UserProfileIcon></UserProfileIcon>
         编辑资料
       </RouterLink>
     </li>
     <li>
-      <RouterLink @click="closeMenu" :to="{name:'user-space-index', params:{user_id:user.id}}" class="text-sm font-bold py-3">
+      <RouterLink @click="handleLogout" :to="{name:'homepage-index'}" class="text-sm font-bold py-3">
         <UserLogoutIcon></UserLogoutIcon>
         退出登录
       </RouterLink>

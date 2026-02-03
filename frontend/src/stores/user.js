@@ -4,13 +4,13 @@ import {ref} from "vue";
 
 export const useUserStore = defineStore('user', ()=>{
     const id = ref(0)
-    const username = ref('wxb')
+    const username = ref('')
     const photo = ref('')
     const profile = ref('')
-    const accessToken = ref('')
+    const accessToken = ref(false)
 
     function isLogin(){
-        return !!accessToken
+        return !!accessToken.value
     }
 
     function setAccessToken(token){
@@ -18,7 +18,7 @@ export const useUserStore = defineStore('user', ()=>{
     }
 
     function setUserInfo(data){
-        id.value = data.id
+        id.value = data.user_id
         username.value = data.username
         photo.value = data.photo
         profile.value = data.profile
