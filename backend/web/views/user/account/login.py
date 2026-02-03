@@ -1,3 +1,5 @@
+import traceback
+
 from django.contrib.auth import authenticate
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -18,6 +20,7 @@ class LoginViews(APIView):
             user = authenticate(username=username, password=password)
             if user:
                 user_profile = UserProfile.objects.get(user=user)
+                # print('user_profile', user_profile)
                 refresh = RefreshToken.for_user(user)
                 response = Response({
                     'result': 'success',
@@ -26,7 +29,6 @@ class LoginViews(APIView):
                     'username': user.get_username(),
                     'photo': user_profile.photo.url,
                     'profile': user_profile.profile,
-
                 })
                 response.set_cookie(
                     key='refresh_token',
@@ -41,6 +43,7 @@ class LoginViews(APIView):
                 'result': '用户名或密码错误',
             })
         except:
+            traceback.print_exc()
             return Response({
                 'result':'系统异常请稍后重试',
             })

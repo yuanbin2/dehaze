@@ -30,7 +30,7 @@ export const useUserStore = defineStore('user', ()=>{
         username.value = ''
         photo.value = ''
         profile.value = ''
-        accessToken.value = ''
+        accessToken.value = false
 
     }
 
