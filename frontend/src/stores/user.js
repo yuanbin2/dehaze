@@ -20,7 +20,7 @@ export const useUserStore = defineStore('user', ()=>{
 
     function setAccessToken(token){
         accessToken.value = token
-        console.log('成功修改token'+token)
+        // console.log('成功修改token'+token)
     }
 
     function setUserInfo(data){

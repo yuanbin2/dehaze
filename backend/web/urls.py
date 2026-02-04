@@ -1,4 +1,4 @@
-from django.contrib.auth.views import LogoutView
+
 from django.urls import path, re_path
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -8,6 +8,7 @@ from rest_framework_simplejwt.views import (
 from web.views.index import index
 from web.views.user.account.get_user_info import GetUserInfoView
 from web.views.user.account.login import LoginViews
+from web.views.user.account.logout import LogoutView
 from web.views.user.account.refresh_token import RefreshTokenView
 from web.views.user.account.register import RegisterView
 

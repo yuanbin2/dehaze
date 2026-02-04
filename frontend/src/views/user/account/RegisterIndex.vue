@@ -39,7 +39,7 @@ async function handleRegister(){
       }
     }catch (err){
       errorMessage.value = err
-      console.log(err)
+      // console.log(err)
     }
   }
 }

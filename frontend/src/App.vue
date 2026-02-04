@@ -12,6 +12,7 @@ onMounted(async () => {
   try{
     const res = await api.get('/api/user/account/get_user_info/')
     const data = res.data
+    // console.log('用户名'+data.result)
     if(data.result === 'success'){
       user.setUserInfo(data)
     }
@@ -32,7 +33,7 @@ onMounted(async () => {
 
 <template>
 <NavBar>
-<RouterView></RouterView>
+<RouterView/>
 </NavBar>
 </template>
 

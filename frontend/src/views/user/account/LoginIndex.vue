@@ -26,7 +26,7 @@ async function handleLogin(){
       })
       const data = res.data
       if(data.result === 'success'){
-        console.log(data)
+        // console.log(data)
         user.setAccessToken(data.access)
         user.setUserInfo(data)
         await router.push({
@@ -36,7 +36,7 @@ async function handleLogin(){
         errorMessage.value = data.result
       }
     }catch(err){
-      console.log(err)
+      // console.log(err)
     }
   }
 
