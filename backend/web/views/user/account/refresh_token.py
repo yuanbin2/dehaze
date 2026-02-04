@@ -1,3 +1,5 @@
+import traceback
+
 from django.conf import settings
 from rest_framework import status
 from rest_framework.response import Response
@@ -17,7 +19,7 @@ class RefreshTokenView(APIView):
                 }, status=401)
             refresh = RefreshToken(refresh_token)
 
-            if settings.Simple_JWT['ROTATE_REFRESH_TOKENS']:
+            if settings.SIMPLE_JWT['ROTATE_REFRESH_TOKENS']:
                 refresh.set_jti()
                 response = Response({
                     'result': 'success',
@@ -34,9 +36,10 @@ class RefreshTokenView(APIView):
 
             return Response({
                 'result': 'success',
-                'access': str(refresh_token.access_token),
+                'access': str(refresh.access_token),
             })
         except:
+            traceback.print_exc()
             return Response({
                 'result': 'refresh_token过期了',
             },status=401)

@@ -7,7 +7,7 @@ export const useUserStore = defineStore('user', ()=>{
     const username = ref('')
     const photo = ref('')
     const profile = ref('')
-    const accessToken = ref(false)
+    const accessToken = ref('')
     const hasPulledUserInfo = ref(false)
 
     function setPulledUserInfo(newStatus){
@@ -20,6 +20,7 @@ export const useUserStore = defineStore('user', ()=>{
 
     function setAccessToken(token){
         accessToken.value = token
+        console.log('成功修改token'+token)
     }
 
     function setUserInfo(data){
@@ -35,8 +36,7 @@ export const useUserStore = defineStore('user', ()=>{
         username.value = ''
         photo.value = ''
         profile.value = ''
-        accessToken.value = false
-
+        accessToken.value = ''
     }
 
     return {

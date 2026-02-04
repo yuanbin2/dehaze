@@ -3,12 +3,13 @@ import traceback
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from web.models.user import UserProfile
 
 
 class GetUserInfoView(APIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = (IsAuthenticated,)
     def get(self, request):
         try:
             user = request.user

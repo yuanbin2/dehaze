@@ -12,8 +12,8 @@ from web.views.user.account.refresh_token import RefreshTokenView
 from web.views.user.account.register import RegisterView
 
 urlpatterns = [
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    # path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/user/account/login/', LoginViews.as_view()),
     path('api/user/account/logout/', LogoutView.as_view()),
     path('api/user/account/register/', RegisterView.as_view()),
