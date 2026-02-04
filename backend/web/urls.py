@@ -1,12 +1,14 @@
 from django.contrib.auth.views import LogoutView
-from django.urls import path
+from django.urls import path, re_path
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
 
 from web.views.index import index
+from web.views.user.account.get_user_info import GetUserInfoView
 from web.views.user.account.login import LoginViews
+from web.views.user.account.refresh_token import RefreshTokenView
 from web.views.user.account.register import RegisterView
 
 urlpatterns = [
@@ -15,6 +17,8 @@ urlpatterns = [
     path('api/user/account/login/', LoginViews.as_view()),
     path('api/user/account/logout/', LogoutView.as_view()),
     path('api/user/account/register/', RegisterView.as_view()),
-    path('api/user/account/refresh_token/', TokenRefreshView.as_view()),
-    path('', index)
+    path('api/user/account/refresh_token/', RefreshTokenView.as_view()),
+    path('api/user/account/get_user_info/', GetUserInfoView.as_view()),
+    re_path(r'^(?!media/|static/|assets/).*$', index),
+    path('', index),
 ]
