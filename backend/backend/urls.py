@@ -22,7 +22,8 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path('', include('web.urls'))
+    path('', include('web.urls')),
+    path('model/', include('model.urls')),
 ]
 
 # 仅限开发阶段使用。生产阶段需要在nginx里配置。
