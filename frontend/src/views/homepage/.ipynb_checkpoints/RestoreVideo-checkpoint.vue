@@ -7,10 +7,13 @@ const selectedFile = ref(null);         // 实际上传的视频文件
 const originalVideoUrl = ref('');       // 前端预览原视频的本地链接
 const isLoading = ref(false);           // 是否正在请求或轮询处理中
 const isCompleted = ref(false);         // 任务是否彻底完成
-const isDownloading = ref(false);       // 【新增】是否正在处理下载
+const isDownloading = ref(false);       // 是否正在处理下载
 const errorMessage = ref('');           // 错误信息提示
 const restoredVideoUrl = ref('');       // 后端合成后的 MP4 链接
 const statusText = ref('');             // 具体的进度文本
+
+// 【新增】帧率设置变量，默认值为 10
+const targetFps = ref(10);              
 
 // 视频帧播放相关状态（用于处理中的预览）
 const restoredFrames = ref([]);         // 存储所有已恢复帧的 URL 数组
@@ -27,16 +30,13 @@ const currentFrameUrl = computed(() => {
 
 // ================= 文件选择 =================
 const handleFileChange = (e) => {
-  // 如果正在处理，严禁更改文件逻辑
   if (isLoading.value) return;
 
   const file = e.target.files[0];
   if (file) {
     selectedFile.value = file;
-    // 生成本地预览地址
     originalVideoUrl.value = URL.createObjectURL(file);
 
-    // 重置所有状态，准备新任务
     restoredFrames.value = [];
     currentFrameIndex.value = 0;
     errorMessage.value = '';
@@ -53,8 +53,12 @@ async function handleRestore() {
     errorMessage.value = '请先选择一个视频文件';
     return;
   }
+  
+  if (!targetFps.value || targetFps.value <= 0) {
+    errorMessage.value = '请输入有效的帧率 (FPS)';
+    return;
+  }
 
-  // 开始任务，锁定 UI
   isLoading.value = true;
   isCompleted.value = false;
   restoredFrames.value = [];
@@ -65,13 +69,15 @@ async function handleRestore() {
   try {
     const formData = new FormData();
     formData.append('video', selectedFile.value);
+    // 【关键新增】将前端设置的 FPS 一并传给后端
+    formData.append('fps', targetFps.value); 
 
     const res = await api.post('/api/restore_video/', formData);
     const data = res.data;
 
     if (data.result === 'success') {
       startPolling(data.task_id);
-      playFrames(); // 启动图片序列预览
+      playFrames(); 
     } else {
       errorMessage.value = data.result || '视频上传失败';
       isLoading.value = false;
@@ -90,7 +96,6 @@ const startPolling = (taskId) => {
       const data = res.data;
 
       if (data.result === 'success') {
-        // 更新预览帧数组
         const urlPrefix = data.frames_url_prefix;
         const processedCount = data.processed_count;
         const frames = [];
@@ -100,9 +105,7 @@ const startPolling = (taskId) => {
         }
         restoredFrames.value = frames;
 
-        // 处理不同的后端状态
         if (data.status === 'completed') {
-          // 彻底完成：停止轮询，显示视频
           clearInterval(pollTimer);
           pollTimer = null;
           stopAllTimers(); 
@@ -130,6 +133,9 @@ const startPolling = (taskId) => {
 // ================= 序列帧播放控制 =================
 const playFrames = () => {
   isPlaying.value = true;
+  // 【更新】让前端序列帧预览的播放速度，也动态匹配设置的 FPS
+  const intervalMs = 1000 / targetFps.value; 
+  
   playbackTimer = setInterval(() => {
     if (restoredFrames.value.length > 0) {
       if (currentFrameIndex.value < restoredFrames.value.length - 1) {
@@ -138,7 +144,7 @@ const playFrames = () => {
         currentFrameIndex.value = 0;
       }
     }
-  }, 50); 
+  }, intervalMs); 
 };
 
 const stopAllTimers = () => {
@@ -150,7 +156,7 @@ const stopAllTimers = () => {
 const togglePlay = () => isPlaying.value ? stopAllTimers() : playFrames();
 const toggleZoom = () => isZoomed.value = !isZoomed.value;
 
-// ================= 【更新】视频下载逻辑 =================
+// ================= 视频下载逻辑 =================
 async function downloadVideo() {
   if (!restoredVideoUrl.value) return;
   
@@ -158,14 +164,12 @@ async function downloadVideo() {
   errorMessage.value = '';
 
   try {
-    // 1. 获取视频的 Blob 数据
     const response = await fetch(restoredVideoUrl.value);
     if (!response.ok) throw new Error('网络请求失败，无法获取视频数据');
     const blob = await response.blob();
     
     const defaultFilename = `restored_video_${Date.now()}.mp4`;
 
-    // 2. 尝试使用现代 File System Access API
     if ('showSaveFilePicker' in window) {
       const opts = {
         suggestedName: defaultFilename,
@@ -174,14 +178,11 @@ async function downloadVideo() {
           accept: { 'video/mp4': ['.mp4'] },
         }],
       };
-      
       const handle = await window.showSaveFilePicker(opts);
       const writable = await handle.createWritable();
       await writable.write(blob);
       await writable.close();
-      
     } else {
-      // 3. 降级方案：传统 a 标签强制下载
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -206,13 +207,14 @@ onUnmounted(() => stopAllTimers());
 
 <template>
   <div class="flex flex-col items-center mt-10 p-4 bg-base-100 min-h-screen">
-    <h2 class="text-3xl font-black mb-8 text-primary uppercase tracking-tighter italic">AI Video Restorer</h2>
+    <h2 class="text-3xl font-black mb-8 text-primary">视频恢复</h2>
 
     <div class="card w-full max-w-xl bg-base-200 shadow-xl p-6 mb-10 border border-base-300">
-      <div class="form-control w-full">
+      
+      <div class="form-control w-full mb-4">
         <label class="label">
           <span class="label-text font-bold">
-            {{ isLoading ? '⚠️ 任务进行中，暂不可更换视频' : '选择待修复视频' }}
+            {{ isLoading ? '⚠️ 任务进行中，暂不可更换视频' : '选择需要恢复的视频' }}
           </span>
         </label>
         <input 
@@ -222,6 +224,25 @@ onUnmounted(() => stopAllTimers());
           :class="['file-input file-input-bordered file-input-primary w-full', isLoading ? 'opacity-50 cursor-not-allowed' : '']" 
           @change="handleFileChange" 
         />
+      </div>
+
+      <div class="form-control w-full">
+        <label class="label">
+          <span class="label-text font-bold">设置处理帧率 (FPS)</span>
+          <span class="label-text-alt text-zinc-500">建议与原视频帧率保持一致</span>
+        </label>
+        <div class="join w-full">
+          <input 
+            type="number" 
+            v-model="targetFps" 
+            :disabled="isLoading"
+            min="1" 
+            max="60"
+            class="input input-bordered input-primary w-full join-item" 
+            placeholder="例如: 10" 
+          />
+          <span class="btn btn-primary join-item no-animation pointer-events-none">FPS</span>
+        </div>
       </div>
 
       <p v-if="errorMessage" class="text-error text-sm mt-4 text-center font-bold">{{ errorMessage }}</p>
@@ -309,5 +330,5 @@ onUnmounted(() => stopAllTimers());
 
 <style scoped>
 .range-xs { height: 0.75rem; }
-.file-input:disabled { background-color: hsl(var(--b3)); }
+.file-input:disabled, .input:disabled { background-color: hsl(var(--b3)); }
 </style>

@@ -117,7 +117,7 @@ async function handleDownload() {
 
 <template>
   <div class="flex flex-col items-center mt-10 p-4 min-h-screen bg-base-100">
-    <h2 class="text-3xl font-black mb-8 text-primary">图像恢复工具</h2>
+    <h2 class="text-3xl font-black mb-8 text-primary">图像恢复</h2>
 
     <div class="card w-full max-w-xl bg-base-200 shadow-xl p-6 mb-10 border border-base-300">
       <div class="form-control w-full">
@@ -140,7 +140,7 @@ async function handleDownload() {
         @click="handleRestore"
       >
         <span v-if="isLoading" class="loading loading-spinner"></span>
-        {{ isLoading ? 'AI 计算中...' : '开始恢复图像' }}
+        {{ isLoading ? '模型 恢复中...' : '开始恢复图像' }}
       </button>
 
       <button 

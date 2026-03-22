@@ -80,7 +80,7 @@ class UNetPredictor:
         pred_img_uint8 = (np.clip(pred_array, 0, 1) * 255).astype(np.uint8)
         pred_pil = Image.fromarray(pred_img_uint8)
 
-        # 5. 确保保存目录存在并保存
+        # 5. 确保保存目录存在并保存aaa
         try:
             save_dir = os.path.dirname(save_path)
             if save_dir:

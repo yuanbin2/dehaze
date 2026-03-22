@@ -1,70 +1,84 @@
-import cv2
 import os
+import torch
+import numpy as np
 from PIL import Image
 
-def process_video_task(input_video_path, output_frames_dir, predictor, skip_rate=2):
+def process_video_task(raw_frames_dir, output_frames_dir, predictor):
     """
-    后端专用的视频处理任务：读取指定的视频文件，按比例抽帧恢复。
+    深度混合版：直接在循环内执行 PyTorch 张量转换和推理，确保与单张图像逻辑 100% 绝对一致。
     
-    :param input_video_path: 视频路径
-    :param output_frames_dir: 输出目录
-    :param predictor: 模型实例
-    :param skip_rate: 抽帧率。默认2代表每2帧处理1帧(即保留1/2的帧数，30fps变15fps)。设为3即保留1/3。
+    :param raw_frames_dir: FFmpeg 拆解出的无损原始帧目录
+    :param output_frames_dir: AI 恢复后的帧存放目录
+    :param predictor: UNetPredictor 实例 (提供模型、设备和转换器)
     """
-    if not os.path.exists(input_video_path):
-        return {"status": "error", "message": "Input video not found"}
+    if not os.path.isdir(raw_frames_dir):
+        return {"status": "error", "message": f"找不到原始帧目录: {raw_frames_dir}"}
 
     os.makedirs(output_frames_dir, exist_ok=True)
 
-    cap = cv2.VideoCapture(input_video_path)
-    if not cap.isOpened():
-        return {"status": "error", "message": "Failed to open video file."}
+    # 获取所有 PNG 帧并严格排序
+    raw_images = [f for f in os.listdir(raw_frames_dir) if f.lower().endswith('.png')]
+    raw_images.sort()
 
-    original_fps = cap.get(cv2.CAP_PROP_FPS)
-    print(f"🎬 原视频 FPS: {original_fps}，当前设置抽帧率: 1/{skip_rate}")
+    if not raw_images:
+        return {"status": "error", "message": "没有找到需要处理的帧。"}
 
-    read_frame_count = 0  # 记录读了多少帧
-    saved_frame_count = 0 # 记录实际保存了多少帧
+    print(f"🎬 开始视频帧处理，共 {len(raw_images)} 帧 (已将单图 Tensor 逻辑内嵌)...")
+
     saved_frames_paths = []
-
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break  # 视频流结束
-
-        read_frame_count += 1
-        
-        # ==========================================
-        # ★ 核心优化：跳帧逻辑
-        # 如果当前帧号不能被 skip_rate 整除，就直接跳过不处理
-        # ==========================================
-        if read_frame_count % skip_rate != 0:
-            continue
-            
-        saved_frame_count += 1
-        
-        # BGR 转 RGB
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        pil_img = Image.fromarray(frame_rgb)
-
-        # ⚠️ 注意：这里的文件名一定要用 saved_frame_count (1,2,3...)，
-        # 否则序号断层(1,3,5...)会导致前端按顺序轮询时找不到图片报 404
-        filename = f"frame_{saved_frame_count:05d}.png"
-        save_path = os.path.join(output_frames_dir, filename)
-
-        # 调用预测器
-        result_path = predictor.process_and_save(pil_img, save_path)
-        if result_path:
-            saved_frames_paths.append(result_path)
-
-    cap.release()
     
+    for img_name in raw_images:
+        img_path = os.path.join(raw_frames_dir, img_name)
+        save_path = os.path.join(output_frames_dir, img_name)
+
+        try:
+            # ==========================================================
+            # 以下逻辑完全 Copy 自 image_recovery.py 的 process_and_save
+            # ==========================================================
+            
+            # 1. 加载图像并转换为 RGB
+            with Image.open(img_path) as img_data:
+                image = img_data.convert('RGB')
+                
+            # 2. 预处理 (ToTensor)
+            try:
+                input_tensor = predictor.transform(image).unsqueeze(0).to(predictor.device)
+            except Exception as e:
+                print(f"❌ 帧 {img_name} 预处理张量失败: {e}")
+                continue
+
+            # 3. 模型推理
+            with torch.no_grad():
+                output_tensor = predictor.model(input_tensor)
+                output_tensor = torch.clamp(output_tensor, 0.0, 1.0)
+
+            # 4. 后处理 (Tensor -> Numpy -> Image)
+            pred_array = output_tensor[0].cpu().numpy().transpose(1, 2, 0)
+            pred_img_uint8 = (np.clip(pred_array, 0, 1) * 255).astype(np.uint8)
+            pred_pil = Image.fromarray(pred_img_uint8)
+
+            # 5. 保存
+            try:
+                pred_pil.save(save_path)
+                saved_frames_paths.append(save_path)
+            except Exception as e:
+                print(f"❌ 帧 {img_name} 保存到磁盘失败: {e}")
+                continue
+
+            # ==========================================================
+            # 逻辑结束
+            # ==========================================================
+
+        except Exception as e:
+            print(f"❌ 帧 {img_name} 处理崩溃: {str(e)}")
+            continue
+
     if len(saved_frames_paths) == 0:
-        return {"status": "error", "message": "No frames were successfully processed."}
+        return {"status": "error", "message": "所有帧均处理失败。"}
 
     return {
         "status": "success",
         "total_frames_processed": len(saved_frames_paths),
         "output_directory": output_frames_dir,
-        "frames_list": saved_frames_paths
+        "fps": None  
     }

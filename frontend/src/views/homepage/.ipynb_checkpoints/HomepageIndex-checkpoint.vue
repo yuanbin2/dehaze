@@ -11,7 +11,7 @@ const activeTab = ref('image');
   <div class="min-h-screen bg-base-100 p-6">
     
     <div class="flex flex-col items-center mb-8">
-      <h1 class="text-3xl font-bold mb-6">AI 多媒体恢复中心</h1>
+      <h1 class="text-3xl font-bold mb-6">AI 散射图像恢复</h1>
       
       <div class="tabs tabs-boxed bg-base-200 p-1">
         <a 
@@ -19,14 +19,14 @@ const activeTab = ref('image');
           :class="{ 'tab-active bg-primary text-white': activeTab === 'image' }"
           @click="activeTab = 'image'"
         >
-          🖼️ 恢复图片
+          🖼️ 图片恢复
         </a>
         <a 
           class="tab text-lg px-8 transition-all" 
           :class="{ 'tab-active bg-primary text-white': activeTab === 'video' }"
           @click="activeTab = 'video'"
         >
-          🎬 恢复视频
+          🎬 视频恢复
         </a>
       </div>
     </div>
